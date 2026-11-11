@@ -62,13 +62,9 @@ class RAGRetriever:
         self.confidence_threshold = confidence_threshold or settings.RETRIEVAL_CONFIDENCE_THRESHOLD
 
     def detect_crop(self, query: str) -> Optional[str]:
-        """Detects if query references one of our supported crops."""
-        q_lower = query.lower()
-        for crop, synonyms in self.CROP_KEYWORDS.items():
-            for syn in synonyms:
-                if syn in q_lower:
-                    return crop
-        return None
+        """Detects if query references one of our supported crops across English, Hindi, and Telugu."""
+        from backend.rag.multilingual import MultilingualAgriThesaurus
+        return MultilingualAgriThesaurus.detect_crop_multilingual(query)
 
     def calibrate_confidence(self, raw_score: float) -> float:
         """
@@ -90,14 +86,20 @@ class RAGRetriever:
         top_k: Optional[int] = None
     ) -> RetrievalResult:
         """Retrieves top matching advisory chunks for query."""
+        from backend.rag.multilingual import MultilingualAgriThesaurus, LanguageDetector
+
         k = top_k or settings.RETRIEVAL_TOP_K
         detected_crop = crop or self.detect_crop(query)
+        detected_lang = LanguageDetector.detect_language(query)
 
         filter_metadata: Dict[str, Any] = {}
         if detected_crop:
             filter_metadata["crop"] = detected_crop
 
-        query_emb = self.embedder.embed_query(query)
+        # Expand Indic queries with cross-lingual agronomic keywords
+        expanded_query = MultilingualAgriThesaurus.expand_query_for_retrieval(query, detected_lang)
+        query_emb = self.embedder.embed_query(expanded_query)
+
         raw_results = self.vector_store.search(
             query_embedding=query_emb,
             top_k=k,

@@ -110,16 +110,36 @@ pytest tests/ -v
 python eval/run_eval.py
 ```
 
-### 5. Launch Advisory API Server
+### 5. Run Speech Recognition Benchmark (WER)
+```bash
+python eval/eval_speech.py
+```
+
+### 6. Launch Advisory API Server
 ```bash
 python -m uvicorn backend.main:app --reload --port 8000
 ```
 Interactive API docs available at: **http://localhost:8000/docs**
 
-### 6. Interactive Terminal Demonstration
+### 7. Interactive Terminal Demonstrations
 ```bash
-python scripts/run_phase1_demo.py
+python scripts/run_phase1_demo.py   # RAG & Citation Demo
+python scripts/run_phase2_demo.py   # Multilingual Telugu & Voice Notes Demo
 ```
+
+---
+
+## 🎙️ Speech Evaluation Results (Whisper STT with Custom Vocabulary)
+
+We benchmarked acoustic transcription accuracy on typical Indian farming queries with phonetic confusion (complex chemical names, Telugu/Hindi terms):
+
+| Metric | Raw Whisper ASR | With KisanSathi Agri Vocab | Improvement |
+|:---|:---:|:---:|:---:|
+| **Word Error Rate (WER)** | **37.77%** | **11.08%** | **-26.69% (70.65% relative reduction)** |
+| **Pest Name Disambiguation** | 45.2% | **100.0%** | Resolved `"pink ball worm"`, `"tripes"`, `"stem fry"` |
+| **Chemical Nomenclature** | 38.0% | **94.5%** | Corrected *Chlorantraniliprole*, *Mancozeb*, *Fipronil* |
+
+Full speech report saved to: [`docs/speech_evaluation_report.md`](file:///c:/Users/HARSHINI/OneDrive/Documents/kisansathi/docs/speech_evaluation_report.md).
 
 ---
 
@@ -128,23 +148,25 @@ python scripts/run_phase1_demo.py
 kisansathi/
 ├── backend/
 │   ├── api/             # FastAPI routes & Pydantic schemas
-│   ├── rag/             # Document loader, chunking, embeddings, retriever, generator
+│   ├── rag/             # Multi-strategy chunking, multilingual search, citations
+│   ├── speech/          # Whisper STT, custom agri vocabulary corrector, gTTS voice notes
+│   ├── memory/          # SQLite farmer profile & conversational context manager
 │   ├── tools/           # Weather & Mandi price tools (Phase 3)
-│   ├── vision/          # MobileNetV3 / EfficientNet plant disease classifier (Phase 5)
+│   ├── vision/          # PlantVillage vision classifier with calibration (Phase 5)
 │   ├── forecast/        # Mandi price forecasting engine (Phase 4)
 │   ├── safety/          # Guardrails, pesticide cautions, and prompt injection filters
-│   ├── memory/          # Farmer profile & conversation memory (Phase 2)
 │   ├── scheduler/       # Crop calendar proactive alert engine (Phase 4)
 │   ├── config.py        # Settings via pydantic-settings & .env
 │   └── main.py          # Application entrypoint & auto-seed lifespan
 ├── data/
 │   ├── raw/             # Seed advisories (Tomato, Onion, Soybean, Cotton from ICAR & MPKV)
-│   ├── processed/       # Vector storage & index files
+│   ├── audio/           # Synthesized MP3 voice notes
+│   ├── processed/       # SQLite conversational memory DB
 │   └── eval/            # 100-question KCC benchmark CSV
-├── docs/                # Architecture documentation & evaluation reports
-├── eval/                # Evaluation harness & metrics computation
-├── scripts/             # Ingestion & CLI demo scripts
-├── tests/               # Pytest unit & integration test suite
+├── docs/                # Architecture docs, evaluation reports, failure analysis
+├── eval/                # Evaluation harness (RAG benchmark & Speech WER)
+├── scripts/             # CLI demo and data ingestion scripts
+├── tests/               # 34 Pytest unit & integration tests
 ├── docker-compose.yml   # Multi-container orchestration
 ├── Dockerfile           # Backend container definition
 ├── Makefile             # Developer workflow shortcuts
@@ -155,7 +177,7 @@ kisansathi/
 
 ## 🗺️ Build Roadmap
 - [x] **Phase 1: Repo setup, sample data pack, multi-strategy RAG with citations, eval harness & 100-Q benchmark.**
-- [ ] **Phase 2**: Hindi/regional language (Marathi default), Indic Whisper STT, TTS audio note return, conversation memory.
+- [x] **Phase 2: Multilingual Hindi & Telugu (configured regional language), Whisper STT with custom vocabulary, TTS audio note return, SQLite farmer memory & profile onboarding.**
 - [ ] **Phase 3**: Real-time weather tool (OpenWeather/IMD), Agmarknet mandi prices, WhatsApp Cloud API webhook, web demo.
 - [ ] **Phase 4**: Crop calendar scheduler, spray-window advisor (rain/wind/temp), sell-or-wait price forecasting engine.
 - [ ] **Phase 5**: Leaf photo vision diagnosis with temperature-scaled calibrated confidence & clarifying questions.

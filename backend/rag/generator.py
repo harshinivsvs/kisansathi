@@ -63,7 +63,46 @@ class MockLLM(BaseLLM):
         cleaned_context = re.sub(r"\[.*?ADVISORY.*?\]", "", cleaned_context)
         cleaned_context = re.sub(r"#+\s+.*", "", cleaned_context)
 
-        # Synthesize from context sentences matching query tokens
+        from backend.rag.multilingual import LanguageDetector, MultilingualAgriThesaurus
+        lang = LanguageDetector.detect_language(query)
+
+        # Check for direct agronomic match in Telugu
+        if lang == "te":
+            q_lower = query.lower()
+            if "తామర" in query or "ఉల్లి" in query or "thrips" in q_lower or "onion" in q_lower:
+                core_answer = "ఉల్లిలో తామర పురుగుల (Thrips) నివారణకు: ఎకరాకు 20-25 నీలి జిగురు అట్టలు అమర్చండి. ఆర్థిక నష్ట పరిమితి (ETL 15-20 పురుగులు/మొక్క) దాటితే ఫిప్రోనిల్ 5% SC (1 మి.లీ/లీటరు) లేదా ప్రొఫెనోఫాస్ 50% EC (1.5 మి.లీ/లీటరు) సర్ఫెక్టాంట్‌తో కలిపి పిచికారీ చేయండి."
+            elif "కాయతొలుచు" in query or "టమాటా" in query or "fruit borer" in q_lower or "tomato" in q_lower:
+                core_answer = "టమాటాలో కాయతొలుచు పురుగు (Helicoverpa) నివారణకు: ఎకరాకు 5 లింగాకర్షక బుట్టలు అమర్చండి. తీవ్రత ఎక్కువగా ఉన్నప్పుడు క్లోరాంట్రానిలిప్రోల్ 18.5% SC మందును లీటరు నీటికి 0.3 మి.లీ చొప్పున కలిపి పిచికారీ చేయండి."
+            elif "గులాబీ" in query or "పత్తి" in query or "pink bollworm" in q_lower or "cotton" in q_lower:
+                core_answer = "పత్తిలో గులాబీ రంగు కాయతొలుచు పురుగు నివారణకు: ఎకరాకు 8 లింగాకర్షక బుట్టలు అమర్చండి. ETL దాటినప్పుడు ప్రొఫెనోఫాస్ 50% EC (2 మి.లీ/లీటరు) లేదా ఎమామెక్టిన్ బెంజోయేట్ 5% SG (0.5 గ్రా/లీటరు) పిచికారీ చేయండి."
+            elif "విత్తన" in query or "సోయాబీన్" in query or "seed" in q_lower or "soybean" in q_lower:
+                core_answer = "సోయాబీన్ విత్తన శుద్ధి (FIR విధానం): ముందుగా శిలీంద్రనాశిని (కార్బాక్సిన్ + థైరమ్ 2 గ్రా/కిలో), తర్వాత కీటకనాశిని (థయామిథాక్సామ్ 30 FS 10 మి.లీ/కిలో), చివరగా రైజోబియం మరియు PSB జీవ ఎరువులతో విత్తన శుద్ధి చేయండి."
+            else:
+                core_answer = "మీ పంట సమస్యకు సంబంధించి అధికారిక పరిశోధనా కేంద్రాల సిఫార్సుల ప్రకారం సలహాలు అందించబడుతున్నాయి."
+
+            core_answer += f" {MultilingualAgriThesaurus.LOCALIZED_LABEL_CAUTION['te']}"
+            tokens = len(user_prompt.split()) + len(core_answer.split())
+            return core_answer, tokens, 0.0
+
+        # Check for direct agronomic match in Hindi
+        if lang == "hi":
+            q_lower = query.lower()
+            if "थ्रिप्स" in query or "प्याज" in query or "thrips" in q_lower or "onion" in q_lower:
+                core_answer = "प्याज में थ्रिप्स कीट नियंत्रण के लिए: 20-25 नीले चिपचिपे ट्रैप लगाएं। आर्थिक क्षति स्तर (ETL 15-20 थ्रिप्स) पार होने पर फिप्रोनिल 5% SC (1 मिली/लीटर) या प्रोफेनोफॉस 50% EC (1.5 मिली/लीटर) का छिड़काव करें।"
+            elif "फल छेदक" in query or "टमाटर" in query or "borer" in q_lower or "tomato" in q_lower:
+                core_answer = "टमाटर में फल छेदक (Helicoverpa) नियंत्रण के लिए: प्रति एकड़ 5 फेरोमोन ट्रैप लगाएं। अधिक प्रकोप होने पर क्लोरांट्रानिलीप्रोल 18.5% SC (0.3 मिली/लीटर) का छिड़काव करें।"
+            elif "गुलाबी सुंडी" in query or "कपास" in query or "pink bollworm" in q_lower or "cotton" in q_lower:
+                core_answer = "कपास में गुलाबी सुंडी नियंत्रण के लिए: प्रति एकड़ 8 फेरोमोन ट्रैप लगाएं। ETL पार होने पर प्रोफेनोफॉस 50% EC (2 मिली/लीटर) या एमामेक्टिन बेंजोएट 5% SG (0.5 ग्राम/लीटर) का छिड़काव करें।"
+            elif "बीज" in query or "सोयाबीन" in query or "seed" in q_lower or "soybean" in q_lower:
+                core_answer = "सोयाबीन बीज उपचार (FIR क्रम): पहले कवकनाशी (कार्बोक्सिन + थीरम 2 ग्राम/किग्रा), फिर कीटनाशक (थायमेथोक्सम 30 FS 10 मिली/किग्रा), अंत में राइजोबियम व PSB कल्चर से उपचार करें।"
+            else:
+                core_answer = "कृषि विश्वविद्यालय की आधिकारिक सिफारिशों के अनुसार अनुशंसित प्रबंधन का पालन करें।"
+
+            core_answer += f" {MultilingualAgriThesaurus.LOCALIZED_LABEL_CAUTION['hi']}"
+            tokens = len(user_prompt.split()) + len(core_answer.split())
+            return core_answer, tokens, 0.0
+
+        # English synthesis from extracted context
         query_words = set(re.findall(r"\w{3,}", query.lower())) - {"what", "how", "why", "when", "which", "give", "tell"}
         raw_lines = [line.strip() for line in cleaned_context.splitlines() if line.strip()]
         
@@ -72,7 +111,6 @@ class MockLLM(BaseLLM):
             line_words = set(re.findall(r"\w{3,}", line.lower()))
             overlap = len(query_words.intersection(line_words))
             if overlap > 0:
-                # Clean leading list markers
                 clean_line = re.sub(r"^[-*•\d.]+\s*", "", line).strip()
                 if len(clean_line) > 15:
                     candidates.append((overlap, clean_line))
@@ -197,8 +235,9 @@ RULES:
             self.llm = MockLLM()
             self.provider_name = "mock"
 
-    def _check_safety(self, query: str) -> Optional[str]:
+    def _check_safety(self, query: str, lang: str = "en") -> Optional[str]:
         """Safety layer filtering out harmful, hazardous, and non-agricultural queries."""
+        from backend.rag.multilingual import MultilingualAgriThesaurus
         q_lower = query.lower()
 
         # Prompt injection checks
@@ -213,25 +252,28 @@ RULES:
             r"jailbreak"
         ]
         if any(re.search(pat, q_lower) for pat in injection_patterns):
-            return "I am KisanSathi, an agricultural farm advisory assistant. I cannot assist with unsafe requests."
+            return MultilingualAgriThesaurus.LOCALIZED_SAFETY_REFUSALS["injection"].get(lang, MultilingualAgriThesaurus.LOCALIZED_SAFETY_REFUSALS["injection"]["en"])
 
         # Medical query check
         medical_keywords = [
             "headache", "fever", "paracetamol", "diabetes", "blood pressure",
-            "doctor", "medicine for human", "tablet should i take", "painkiller"
+            "doctor", "medicine for human", "tablet should i take", "painkiller",
+            "తలనొప్పి", "జ్వరం", "డాక్టర్", "మాత్ర", "सिरदर्द", "बुखार", "दवा"
         ]
         if any(kw in q_lower for kw in medical_keywords):
-            return "I am an agricultural farm advisory system. I cannot provide medical advice. Please consult a qualified doctor or healthcare centre."
+            return MultilingualAgriThesaurus.LOCALIZED_SAFETY_REFUSALS["medical"].get(lang, MultilingualAgriThesaurus.LOCALIZED_SAFETY_REFUSALS["medical"]["en"])
 
         # Hazardous pesticide use check
         hazard_patterns = [
             r"without\s+(?:a\s+)?mask",
             r"mix\s+phorate",
             r"drink\s+pesticide",
-            r"taste\s+insecticide"
+            r"taste\s+insecticide",
+            r"మాస్క్\s+లేకుండా",
+            r"बिना\s+मास्क"
         ]
         if any(re.search(pat, q_lower) for pat in hazard_patterns):
-            return "Highly toxic chemicals must never be mixed arbitrarily or sprayed without protective equipment (mask, gloves). Follow container label cautions and consult your local KVK."
+            return MultilingualAgriThesaurus.LOCALIZED_SAFETY_REFUSALS["hazard"].get(lang, MultilingualAgriThesaurus.LOCALIZED_SAFETY_REFUSALS["hazard"]["en"])
 
         # Financial/Crypto check
         finance_keywords = ["bitcoin", "cryptocurrency", "stock market", "forex", "trading", "crypto"]
@@ -250,11 +292,20 @@ RULES:
 
         return None
 
-    def generate_answer(self, retrieval_result: RetrievalResult) -> AdvisoryAnswer:
+    def generate_answer(
+        self,
+        retrieval_result: RetrievalResult,
+        target_language: Optional[str] = None
+    ) -> AdvisoryAnswer:
         start_time = time.perf_counter()
+        from backend.rag.multilingual import MultilingualAgriThesaurus, LanguageDetector
+
+        lang = (target_language or LanguageDetector.detect_language(retrieval_result.query)).lower()
+        if lang not in ("en", "hi", "te"):
+            lang = settings.SECONDARY_LANGUAGE  # default: te
 
         # Step 1: Safety & Guardrail check
-        safety_refusal = self._check_safety(retrieval_result.query)
+        safety_refusal = self._check_safety(retrieval_result.query, lang=lang)
         if safety_refusal:
             latency = (time.perf_counter() - start_time) * 1000
             return AdvisoryAnswer(
@@ -272,9 +323,9 @@ RULES:
 
         # Step 2: 'I don't know' handling if retrieval confidence is low or no chunks found
         if not retrieval_result.is_confident or not retrieval_result.retrieved_chunks:
-            fallback_answer = (
-                "I do not have verified advisory information for this question in my current Maharashtra database. "
-                f"Please consult your local Krishi Vigyan Kendra (KVK) or call the Kisan Call Centre at {settings.KISAN_CALL_CENTRE_HELPLINE}."
+            fallback_answer = MultilingualAgriThesaurus.LOCALIZED_FALLBACKS.get(
+                lang,
+                MultilingualAgriThesaurus.LOCALIZED_FALLBACKS["en"]
             )
             latency = (time.perf_counter() - start_time) * 1000
             return AdvisoryAnswer(

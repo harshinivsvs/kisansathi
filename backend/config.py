@@ -22,10 +22,11 @@ class Settings(BaseSettings):
     PORT: int = 8000
     HOST: str = "0.0.0.0"
 
-    # Regional & Agronomic Scoping (v1 default: Maharashtra, 4 crops)
+    # Regional & Agronomic Scoping (v1 default: Maharashtra, 4 crops, Hindi + Telugu)
     DEFAULT_STATE: str = "Maharashtra"
     DEFAULT_LANGUAGE: str = "hi"
-    SECONDARY_LANGUAGE: str = "mr"
+    SECONDARY_LANGUAGE: str = "te"  # Configured regional language: Telugu
+    SUPPORTED_LANGUAGES: str = "en,hi,te"
     SUPPORTED_CROPS: str = "tomato,onion,soybean,cotton"
 
     # RAG Configuration
@@ -68,6 +69,10 @@ class Settings(BaseSettings):
     @property
     def crop_list(self) -> List[str]:
         return [c.strip().lower() for c in self.SUPPORTED_CROPS.split(",") if c.strip()]
+
+    @property
+    def language_list(self) -> List[str]:
+        return [l.strip().lower() for l in self.SUPPORTED_LANGUAGES.split(",") if l.strip()]
 
 
 # Global singleton instance
