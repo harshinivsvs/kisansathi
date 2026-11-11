@@ -16,6 +16,8 @@ htmlcov/
 data/processed/vector_store/
 data/processed/*.sqlite
 data/processed/*.db
+data/processed/*.json
+data/audio/*.mp3
 
 # Model checkpoints & cache
 models/

@@ -1,0 +1,200 @@
+[
+  {
+    "mandi_id": "MH-NAS-01",
+    "mandi_name": "Lasalgaon",
+    "district": "Nashik",
+    "commodity": "onion",
+    "min_price": 1850,
+    "max_price": 2450,
+    "modal_price": 2180,
+    "arrival_tonnes": 320.5,
+    "report_date": "2026-11-10"
+  },
+  {
+    "mandi_id": "MH-NAS-01",
+    "mandi_name": "Lasalgaon",
+    "district": "Nashik",
+    "commodity": "tomato",
+    "min_price": 1400,
+    "max_price": 1900,
+    "modal_price": 1650,
+    "arrival_tonnes": 115.0,
+    "report_date": "2026-11-10"
+  },
+  {
+    "mandi_id": "MH-NAS-02",
+    "mandi_name": "Pimpalgaon Baswant",
+    "district": "Nashik",
+    "commodity": "onion",
+    "min_price": 1900,
+    "max_price": 2520,
+    "modal_price": 2240,
+    "arrival_tonnes": 280.0,
+    "report_date": "2026-11-10"
+  },
+  {
+    "mandi_id": "MH-NAS-02",
+    "mandi_name": "Pimpalgaon Baswant",
+    "district": "Nashik",
+    "commodity": "tomato",
+    "min_price": 1500,
+    "max_price": 2100,
+    "modal_price": 1780,
+    "arrival_tonnes": 190.0,
+    "report_date": "2026-11-10"
+  },
+  {
+    "mandi_id": "MH-NAS-03",
+    "mandi_name": "Nashik APMC",
+    "district": "Nashik",
+    "commodity": "tomato",
+    "min_price": 1450,
+    "max_price": 1950,
+    "modal_price": 1700,
+    "arrival_tonnes": 140.0,
+    "report_date": "2026-11-09"
+  },
+  {
+    "mandi_id": "MH-PUN-01",
+    "mandi_name": "Pune Gultekdi",
+    "district": "Pune",
+    "commodity": "onion",
+    "min_price": 2100,
+    "max_price": 2700,
+    "modal_price": 2400,
+    "arrival_tonnes": 410.0,
+    "report_date": "2026-11-10"
+  },
+  {
+    "mandi_id": "MH-PUN-01",
+    "mandi_name": "Pune Gultekdi",
+    "district": "Pune",
+    "commodity": "tomato",
+    "min_price": 1600,
+    "max_price": 2200,
+    "modal_price": 1850,
+    "arrival_tonnes": 230.0,
+    "report_date": "2026-11-10"
+  },
+  {
+    "mandi_id": "MH-AHM-01",
+    "mandi_name": "Ahmednagar APMC",
+    "district": "Ahmednagar",
+    "commodity": "onion",
+    "min_price": 1800,
+    "max_price": 2350,
+    "modal_price": 2100,
+    "arrival_tonnes": 210.0,
+    "report_date": "2026-11-10"
+  },
+  {
+    "mandi_id": "MH-AHM-01",
+    "mandi_name": "Ahmednagar APMC",
+    "district": "Ahmednagar",
+    "commodity": "soybean",
+    "min_price": 4250,
+    "max_price": 4680,
+    "modal_price": 4520,
+    "arrival_tonnes": 310.0,
+    "report_date": "2026-11-10"
+  },
+  {
+    "mandi_id": "MH-SOL-01",
+    "mandi_name": "Solapur APMC",
+    "district": "Solapur",
+    "commodity": "onion",
+    "min_price": 1750,
+    "max_price": 2280,
+    "modal_price": 2050,
+    "arrival_tonnes": 340.0,
+    "report_date": "2026-11-10"
+  },
+  {
+    "mandi_id": "MH-AKO-01",
+    "mandi_name": "Akola APMC",
+    "district": "Akola",
+    "commodity": "cotton",
+    "min_price": 6800,
+    "max_price": 7450,
+    "modal_price": 7180,
+    "arrival_tonnes": 480.0,
+    "report_date": "2026-11-10"
+  },
+  {
+    "mandi_id": "MH-AKO-01",
+    "mandi_name": "Akola APMC",
+    "district": "Akola",
+    "commodity": "soybean",
+    "min_price": 4300,
+    "max_price": 4720,
+    "modal_price": 4550,
+    "arrival_tonnes": 520.0,
+    "report_date": "2026-11-10"
+  },
+  {
+    "mandi_id": "MH-AMR-01",
+    "mandi_name": "Amravati APMC",
+    "district": "Amravati",
+    "commodity": "soybean",
+    "min_price": 4320,
+    "max_price": 4750,
+    "modal_price": 4580,
+    "arrival_tonnes": 390.0,
+    "report_date": "2026-11-09"
+  },
+  {
+    "mandi_id": "MH-AMR-01",
+    "mandi_name": "Amravati APMC",
+    "district": "Amravati",
+    "commodity": "cotton",
+    "min_price": 6750,
+    "max_price": 7380,
+    "modal_price": 7120,
+    "arrival_tonnes": 340.0,
+    "report_date": "2026-11-10"
+  },
+  {
+    "mandi_id": "MH-NAG-01",
+    "mandi_name": "Nagpur Kalamna",
+    "district": "Nagpur",
+    "commodity": "cotton",
+    "min_price": 6900,
+    "max_price": 7520,
+    "modal_price": 7250,
+    "arrival_tonnes": 420.0,
+    "report_date": "2026-11-10"
+  },
+  {
+    "mandi_id": "MH-JAL-01",
+    "mandi_name": "Jalgaon APMC",
+    "district": "Jalgaon",
+    "commodity": "cotton",
+    "min_price": 6850,
+    "max_price": 7480,
+    "modal_price": 7200,
+    "arrival_tonnes": 380.0,
+    "report_date": "2026-11-10"
+  },
+  {
+    "mandi_id": "MH-JLN-01",
+    "mandi_name": "Jalna APMC",
+    "district": "Jalna",
+    "commodity": "soybean",
+    "min_price": 4280,
+    "max_price": 4690,
+    "modal_price": 4510,
+    "arrival_tonnes": 260.0,
+    "report_date": "2026-11-08"
+  },
+  {
+    "mandi_id": "MH-AUR-01",
+    "mandi_name": "Chhatrapati Sambhajinagar",
+    "district": "Aurangabad",
+    "commodity": "cotton",
+    "min_price": 6780,
+    "max_price": 7400,
+    "modal_price": 7150,
+    "arrival_tonnes": 290.0,
+    "report_date": "2026-11-10"
+  }
+]

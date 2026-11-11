@@ -30,10 +30,15 @@ class FarmerProfileDTO(BaseModel):
     phone_number: str
     name: Optional[str] = None
     village: Optional[str] = None
-    district: Optional[str] = None
+    taluka: Optional[str] = None
+    district: Optional[str] = "Nashik"
     state: str = "Maharashtra"
+    latitude: Optional[float] = 19.9975
+    longitude: Optional[float] = 73.7898
+    location_consent_given: bool = False
     primary_crop: Optional[str] = None
     sowing_date: Optional[str] = None
+    land_size_acres: Optional[float] = None
     preferred_language: str = "te"
 
 
@@ -54,6 +59,9 @@ class QueryResponse(BaseModel):
     audio_duration_sec: Optional[float] = None
     followup_profile_prompt: Optional[str] = None
     farmer_profile: Optional[FarmerProfileDTO] = None
+    intent: Optional[str] = "rag"
+    tool_data: Optional[Dict[str, Any]] = None
+    location_used: Optional[str] = None
 
 
 class VoiceQueryRequest(BaseModel):
@@ -102,3 +110,22 @@ class HealthResponse(BaseModel):
     embedding_provider: str
     llm_provider: str
     chunking_strategy: str
+
+
+class LocationUpdateRequest(BaseModel):
+    """Payload to update or save farmer location coordinates and consent."""
+    phone_number: str = Field("+919876543210")
+    latitude: float
+    longitude: float
+    village: Optional[str] = None
+    taluka: Optional[str] = None
+    district: Optional[str] = None
+    consent_given: bool = True
+
+
+class WatchlistCreateRequest(BaseModel):
+    """Payload to configure a price alert."""
+    phone_number: str = Field("+919876543210")
+    crop: str
+    target_price: float
+    condition: str = "above"

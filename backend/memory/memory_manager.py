@@ -1,22 +1,24 @@
 """
-Memory manager for KisanSathi conversational state and profile tracking.
-Stores farmer profile attributes and asks for missing profile details one at a time.
+Memory manager for KisanSathi conversational state, location-aware profiles,
+price watchlists, and personalized agricultural digests.
 """
 
+from datetime import datetime
 import json
 from pathlib import Path
 import re
 import sqlite3
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from backend.config import settings
-from backend.memory.database import DB_PATH, FarmerProfile, init_db
+from backend.memory.database import DB_PATH, FarmerProfile, PriceWatchlist, init_db
 from backend.rag.multilingual import MultilingualAgriThesaurus, LanguageDetector
+from backend.tools.location import LocationManager, GeoLocation
 
 
 class MemoryManager:
-    """Manages farmer profiles, conversational context windows, and telemetry logging."""
+    """Manages location-aware farmer profiles, watchlists, and contextual prompts."""
 
     def __init__(self, db_path: Path = DB_PATH):
         self.db_path = db_path
@@ -28,7 +30,7 @@ class MemoryManager:
         return conn
 
     def get_or_create_farmer(self, phone_number: str, default_lang: Optional[str] = None) -> FarmerProfile:
-        """Retrieves existing farmer profile or registers a new profile."""
+        """Retrieves existing profile or creates a new one with location defaults."""
         clean_phone = phone_number.strip()
         lang = default_lang or settings.SECONDARY_LANGUAGE  # default: te (Telugu)
 
@@ -38,15 +40,21 @@ class MemoryManager:
         row = cursor.fetchone()
 
         if row:
+            keys = row.keys()
             profile = FarmerProfile(
                 phone_number=row["phone_number"],
                 name=row["name"],
                 village=row["village"],
-                district=row["district"],
-                state=row["state"],
+                taluka=row["taluka"] if "taluka" in keys else None,
+                district=row["district"] if "district" in keys and row["district"] else "Nashik",
+                state=row["state"] if "state" in keys and row["state"] else "Maharashtra",
+                latitude=float(row["latitude"]) if "latitude" in keys and row["latitude"] is not None else 19.9975,
+                longitude=float(row["longitude"]) if "longitude" in keys and row["longitude"] is not None else 73.7898,
+                location_consent_given=bool(row["location_consent_given"]) if "location_consent_given" in keys else False,
                 primary_crop=row["primary_crop"],
                 sowing_date=row["sowing_date"],
-                preferred_language=row["preferred_language"],
+                land_size_acres=float(row["land_size_acres"]) if "land_size_acres" in keys and row["land_size_acres"] is not None else None,
+                preferred_language=(row["preferred_language"] if "preferred_language" in keys else None) or lang,
                 created_at=row["created_at"],
                 updated_at=row["updated_at"]
             )
@@ -55,36 +63,49 @@ class MemoryManager:
 
         now = time.time()
         cursor.execute("""
-            INSERT INTO farmers (phone_number, preferred_language, created_at, updated_at)
-            VALUES (?, ?, ?, ?)
-        """, (clean_phone, lang, now, now))
+            INSERT INTO farmers (
+                phone_number, district, latitude, longitude,
+                location_consent_given, preferred_language, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (clean_phone, "Nashik", 19.9975, 73.7898, 0, lang, now, now))
         conn.commit()
         conn.close()
 
         return FarmerProfile(
             phone_number=clean_phone,
+            district="Nashik",
+            latitude=19.9975,
+            longitude=73.7898,
+            location_consent_given=False,
             preferred_language=lang,
             created_at=now,
             updated_at=now
         )
 
     def update_farmer(self, profile: FarmerProfile) -> None:
-        """Saves updated profile attributes to SQLite."""
+        """Persists profile state."""
         profile.updated_at = time.time()
         conn = self._get_connection()
         cursor = conn.cursor()
         cursor.execute("""
             UPDATE farmers
-            SET name = ?, village = ?, district = ?, state = ?,
-                primary_crop = ?, sowing_date = ?, preferred_language = ?, updated_at = ?
+            SET name = ?, village = ?, taluka = ?, district = ?, state = ?,
+                latitude = ?, longitude = ?, location_consent_given = ?,
+                primary_crop = ?, sowing_date = ?, land_size_acres = ?,
+                preferred_language = ?, updated_at = ?
             WHERE phone_number = ?
         """, (
             profile.name,
             profile.village,
+            profile.taluka,
             profile.district,
             profile.state,
+            profile.latitude,
+            profile.longitude,
+            1 if profile.location_consent_given else 0,
             profile.primary_crop,
             profile.sowing_date,
+            profile.land_size_acres,
             profile.preferred_language,
             profile.updated_at,
             profile.phone_number
@@ -92,10 +113,44 @@ class MemoryManager:
         conn.commit()
         conn.close()
 
+    def update_location(
+        self,
+        phone_number: str,
+        latitude: float,
+        longitude: float,
+        village: Optional[str] = None,
+        district: Optional[str] = None,
+        taluka: Optional[str] = None,
+        consent_given: bool = True
+    ) -> FarmerProfile:
+        """Directly updates farmer's location coordinates and consent status."""
+        profile = self.get_or_create_farmer(phone_number)
+        profile.latitude = latitude
+        profile.longitude = longitude
+        if village:
+            profile.village = village
+        if district:
+            profile.district = district
+        if taluka:
+            profile.taluka = taluka
+        profile.location_consent_given = consent_given
+        self.update_farmer(profile)
+        return profile
+
+    def delete_location(self, phone_number: str) -> None:
+        """Removes stored location upon farmer request."""
+        profile = self.get_or_create_farmer(phone_number)
+        profile.latitude = 19.9975
+        profile.longitude = 73.7898
+        profile.village = None
+        profile.taluka = None
+        profile.district = "Nashik"
+        profile.location_consent_given = False
+        self.update_farmer(profile)
+
     def extract_profile_updates(self, text: str, profile: FarmerProfile) -> bool:
         """
-        Extracts farmer profile details from conversational input.
-        Returns True if any attribute was updated.
+        Extracts farmer profile details, location pin/names, land size, and crop from input.
         """
         updated = False
         t_lower = text.lower()
@@ -116,22 +171,27 @@ class MemoryManager:
                         updated = True
                         break
 
-        # 2. Village / Location extraction
+        # 2. Location / Village / District extraction
         village_patterns = [
             r"(?:from|village|district|in)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)",
             r"(?:गांव|गाँव|जिले से|रहता हूँ)\s+([^\s,]+)",
             r"([^\s,]+)\s+నుండి",
             r"(?:గ్రామం|జిల్లా|మా ఊరు)\s+([^\s,]+)"
         ]
-        if not profile.village:
-            for pat in village_patterns:
-                m = re.search(pat, text, re.IGNORECASE)
-                if m:
-                    extracted = m.group(1).strip()
-                    if len(extracted) > 2 and extracted.lower() not in ("farm", "field", "here", "india"):
-                        profile.village = extracted.title()
-                        updated = True
-                        break
+        for pat in village_patterns:
+            m = re.search(pat, text, re.IGNORECASE)
+            if m:
+                extracted = m.group(1).strip()
+                if len(extracted) > 2 and extracted.lower() not in ("farm", "field", "here", "india"):
+                    profile.village = extracted.title()
+                    geo = LocationManager.resolve_location(extracted, default_district=profile.district or "Nashik")
+                    profile.latitude = geo.latitude
+                    profile.longitude = geo.longitude
+                    if geo.district:
+                        profile.district = geo.district
+                    profile.location_consent_given = True
+                    updated = True
+                    break
 
         # 3. Crop extraction
         detected_crop = MultilingualAgriThesaurus.detect_crop_multilingual(text)
@@ -154,6 +214,15 @@ class MemoryManager:
                     updated = True
                     break
 
+        # 5. Land size extraction (e.g. 5 acres, 2 hec)
+        land_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:acres?|एकड़|ఎకరాలు|hec|hectares?)", text, re.IGNORECASE)
+        if land_match and not profile.land_size_acres:
+            try:
+                profile.land_size_acres = float(land_match.group(1))
+                updated = True
+            except Exception:
+                pass
+
         if updated:
             self.update_farmer(profile)
 
@@ -161,24 +230,23 @@ class MemoryManager:
 
     def get_next_missing_profile_prompt(self, profile: FarmerProfile, language: str = "te") -> Optional[str]:
         """
-        Returns a polite inquiry for the next missing farmer detail (one at a time).
-        Follows priority sequence: Name -> Village -> Crop -> Sowing Date.
+        Sequentially queries missing farmer details one by one:
+        Name -> Location / Consent -> Crop -> Sowing Date.
         """
         lang = language.lower()
         if lang not in ("en", "hi", "te"):
             lang = profile.preferred_language or "te"
 
-        # Sequential inquiry prompts
         prompts = {
             "name": {
                 "en": "By the way, may I know your name so I can personalize your advisories?",
                 "hi": "वैसे, क्या मैं आपका नाम जान सकता हूँ ताकि आपको बेहतर सलाह दे सकूँ?",
                 "te": "అలాగే, మీకు వ్యక్తిగతీకరించిన సలహాలు అందించడానికి మీ పేరు తెలుసుకోవచ్చా?"
             },
-            "village": {
-                "en": "Which village or district is your farm located in?",
-                "hi": "आपका खेत किस गांव या जिले में स्थित है?",
-                "te": "మీ వ్యవసాయ పొలం ఏ గ్రామం లేదా జిల్లాలో ఉంది?"
+            "location": {
+                "en": "To provide accurate local weather and nearest mandi prices, may I know your village or district? (You can share your WhatsApp location pin)",
+                "hi": "सटीक स्थानीय मौसम और नजदीकी मंडी भाव के लिए, क्या आप अपना गांव या जिला बताएंगे? (आप व्हाट्सएप लोकेशन पिन भी साझा कर सकते हैं)",
+                "te": "ఖచ్చితమైన స్థానిక వాతావరణం మరియు సమీప మార్కెట్ ధరలను అందించడానికి, మీ గ్రామం లేదా జిల్లా పేరు తెలుపగలరా? (లేదా వాట్సాప్ లొకేషన్ పిన్ పంపవచ్చు)"
             },
             "crop": {
                 "en": "Which primary crop are you cultivating this season (Tomato, Onion, Soybean, Cotton)?",
@@ -195,7 +263,7 @@ class MemoryManager:
         if not profile.name:
             return prompts["name"].get(lang, prompts["name"]["en"])
         if not profile.village:
-            return prompts["village"].get(lang, prompts["village"]["en"])
+            return prompts["location"].get(lang, prompts["location"]["en"])
         if not profile.primary_crop:
             return prompts["crop"].get(lang, prompts["crop"]["en"])
         if not profile.sowing_date:
@@ -203,6 +271,70 @@ class MemoryManager:
 
         return None
 
+    # Watchlist Management
+    def create_price_watchlist(
+        self,
+        phone_number: str,
+        crop: str,
+        target_price: float,
+        condition: str = "above"
+    ) -> PriceWatchlist:
+        """Stores a price threshold alert request."""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        now = time.time()
+        cursor.execute("""
+            INSERT INTO price_watchlists (phone_number, crop, target_price, condition, active, created_at)
+            VALUES (?, ?, ?, ?, 1, ?)
+        """, (phone_number, crop.lower().strip(), target_price, condition.lower(), now))
+        conn.commit()
+        wid = cursor.lastrowid
+        conn.close()
+
+        return PriceWatchlist(
+            id=wid,
+            phone_number=phone_number,
+            crop=crop.lower().strip(),
+            target_price=target_price,
+            condition=condition,
+            active=True,
+            created_at=now
+        )
+
+    def check_watchlists(self, crop: str, current_modal_price: float, mandi_name: str) -> List[Dict[str, Any]]:
+        """Identifies triggered price threshold alerts."""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, phone_number, crop, target_price, condition
+            FROM price_watchlists
+            WHERE crop = ? AND active = 1
+        """, (crop.lower().strip(),))
+        rows = cursor.fetchall()
+        conn.close()
+
+        triggered = []
+        for r in rows:
+            target = r["target_price"]
+            cond = r["condition"]
+            is_triggered = (cond == "above" and current_modal_price >= target) or (cond == "below" and current_modal_price <= target)
+
+            if is_triggered:
+                triggered.append({
+                    "watchlist_id": r["id"],
+                    "phone_number": r["phone_number"],
+                    "crop": crop,
+                    "target_price": target,
+                    "current_price": current_modal_price,
+                    "mandi_name": mandi_name,
+                    "message_en": f"Alert: {crop.title()} has reached ₹{current_modal_price:.0f}/q at {mandi_name} (target: ₹{target:.0f}/q).",
+                    "message_te": f"ధర హెచ్చరిక: {mandi_name} మార్కెట్‌లో {crop.title()} ధర ₹{current_modal_price:.0f}/క్వింటాల్‌కు చేరింది (లక్ష్యం: ₹{target:.0f}).",
+                    "message_hi": f"भाव अलर्ट: {mandi_name} में {crop.title()} का भाव ₹{current_modal_price:.0f}/क्विंटल पहुंच गया है।"
+                })
+
+        return triggered
+
+    # Dialog and Logging
     def add_turn(
         self,
         phone_number: str,
@@ -212,7 +344,6 @@ class MemoryManager:
         language: str,
         crop_context: Optional[str] = None
     ) -> None:
-        """Stores a conversational exchange in history."""
         conn = self._get_connection()
         cursor = conn.cursor()
         cursor.execute("""
@@ -223,7 +354,6 @@ class MemoryManager:
         conn.close()
 
     def get_recent_history(self, phone_number: str, limit: int = 4) -> List[Dict[str, Any]]:
-        """Retrieves the recent conversational turns for the farmer."""
         conn = self._get_connection()
         cursor = conn.cursor()
         cursor.execute("""
@@ -260,7 +390,6 @@ class MemoryManager:
         audio_url: str = "",
         language: str = "te"
     ) -> None:
-        """Logs comprehensive telemetry for every advisory query."""
         conn = self._get_connection()
         cursor = conn.cursor()
         cursor.execute("""
@@ -283,3 +412,63 @@ class MemoryManager:
         ))
         conn.commit()
         conn.close()
+
+    def generate_personalized_digest(
+        self,
+        phone_number: str,
+        weather_tool: Any,
+        mandi_tool: Any
+    ) -> Dict[str, Any]:
+        """
+        Creates a personalized morning briefing combining:
+        1. Local weather & rain probability for farmer's location
+        2. Nearest mandi prices & net earnings for their crop
+        3. Stage-wise advisory tip based on sowing date
+        """
+        farmer = self.get_or_create_farmer(phone_number)
+        lang = farmer.preferred_language or "te"
+        crop = farmer.primary_crop or "onion"
+        lat = farmer.latitude or 19.9975
+        lon = farmer.longitude or 73.7898
+        loc_name = farmer.village or farmer.district or "Nashik"
+
+        # 1. Weather
+        weather = weather_tool.get_weather(lat, lon, location_name=loc_name)
+        # 2. Mandi prices
+        mandi = mandi_tool.query_prices(crop=crop, user_lat=lat, user_lon=lon, location_label=loc_name)
+
+        # 3. Crop stage tip
+        tip_en = f"Maintain regular field monitoring for {crop.title()} pests and check moisture before next irrigation."
+        tip_hi = f"{crop.title()} की फसल में कीटों की नियमित निगरानी करें और अगली सिंचाई से पहले मिट्टी में नमी की जांच करें।"
+        tip_te = f"{crop.title()} పంటలో పురుగుల ఉధృతిని గమనించండి మరియు తదుపరి నీటి తడి ఇచ్చే ముందు నేలలో తేమను పరిశీలించండి."
+
+        if lang == "te":
+            digest_text = (
+                f"🌾 నమస్కారం {farmer.name or 'రైతు సోదరా'}! మీ రోజువారీ వ్యవసాయ సమాచారం ({loc_name}):\n"
+                f"🌦️ వాతావరణం: {weather.agronomic_summary_te}\n"
+                f"💰 మార్కెట్ ధరలు: {mandi.summary_te}\n"
+                f"💡 పంట సలహా: {tip_te}"
+            )
+        elif lang == "hi":
+            digest_text = (
+                f"🌾 नमस्ते {farmer.name or 'किसान भाई'}! आपका दैनिक कृषि समाचार ({loc_name}):\n"
+                f"🌦️ मौसम: {weather.agronomic_summary_hi}\n"
+                f"💰 मंडी भाव: {mandi.summary_hi}\n"
+                f"💡 सलाह: {tip_hi}"
+            )
+        else:
+            digest_text = (
+                f"🌾 Hello {farmer.name or 'Farmer'}! Your daily agricultural digest for {loc_name}:\n"
+                f"🌦️ Weather: {weather.agronomic_summary}\n"
+                f"💰 Mandi Prices: {mandi.summary_en}\n"
+                f"💡 Crop Tip: {tip_en}"
+            )
+
+        return {
+            "phone_number": phone_number,
+            "crop": crop,
+            "location": loc_name,
+            "digest_text": digest_text,
+            "weather": weather,
+            "mandi": mandi
+        }

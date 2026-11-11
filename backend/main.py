@@ -7,9 +7,11 @@ from pathlib import Path
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from backend.config import settings
 from backend.api.routes import router
+from backend.api.whatsapp import router as whatsapp_router
 from backend.rag.document_loader import DocumentLoader
 from backend.rag.chunking import ChunkerFactory
 from backend.rag.embeddings import get_embedder
@@ -75,8 +77,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount Advisory API routes
+# Mount Advisory and WhatsApp API routes
 app.include_router(router)
+app.include_router(whatsapp_router)
+
+# Mount Web Demo static files if frontend directory exists
+frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
+if frontend_dir.exists():
+    app.mount("/demo", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
 
 
 @app.get("/")
@@ -86,6 +94,8 @@ def root():
         "version": "0.1.0",
         "description": "Multilingual Farm Advisory RAG API",
         "docs_url": "/docs",
+        "web_demo": "/demo",
+        "whatsapp_webhook": "/api/v1/whatsapp/webhook",
         "health_check": "/api/v1/health",
         "state_scope": settings.DEFAULT_STATE,
         "supported_crops": settings.crop_list

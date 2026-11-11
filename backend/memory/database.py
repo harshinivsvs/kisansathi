@@ -15,21 +15,37 @@ DB_PATH = DB_DIR / "kisansathi_memory.db"
 
 
 class FarmerProfile(BaseModel):
-    """Profile representing a registered farmer."""
+    """Profile representing a registered farmer with location and agronomic context."""
     phone_number: str
     name: Optional[str] = None
     village: Optional[str] = None
-    district: Optional[str] = None
+    taluka: Optional[str] = None
+    district: Optional[str] = "Nashik"
     state: str = "Maharashtra"
+    latitude: Optional[float] = 19.9975  # Default Nashik
+    longitude: Optional[float] = 73.7898
+    location_consent_given: bool = False
     primary_crop: Optional[str] = None
     sowing_date: Optional[str] = None
+    land_size_acres: Optional[float] = None
     preferred_language: str = "te"  # Configured regional default: Telugu
     created_at: float = Field(default_factory=time.time)
     updated_at: float = Field(default_factory=time.time)
 
 
+class PriceWatchlist(BaseModel):
+    """Mandi price target alert request."""
+    id: Optional[int] = None
+    phone_number: str
+    crop: str
+    target_price: float
+    condition: str = "above"  # "above" or "below"
+    active: bool = True
+    created_at: float = Field(default_factory=time.time)
+
+
 def init_db(db_path: Path = DB_PATH) -> None:
-    """Initializes tables for farmer profiles, dialog turns, and query telemetry logs."""
+    """Initializes tables for farmer profiles, dialog turns, and price watchlists."""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
@@ -38,15 +54,40 @@ def init_db(db_path: Path = DB_PATH) -> None:
         phone_number TEXT PRIMARY KEY,
         name TEXT,
         village TEXT,
-        district TEXT,
+        taluka TEXT,
+        district TEXT DEFAULT 'Nashik',
         state TEXT DEFAULT 'Maharashtra',
+        latitude REAL DEFAULT 19.9975,
+        longitude REAL DEFAULT 73.7898,
+        location_consent_given INTEGER DEFAULT 0,
         primary_crop TEXT,
         sowing_date TEXT,
+        land_size_acres REAL,
         preferred_language TEXT DEFAULT 'te',
         created_at REAL,
         updated_at REAL
     )
     """)
+
+    # Safe migration: add any missing columns if table pre-existed
+    cursor.execute("PRAGMA table_info(farmers)")
+    existing_cols = {col[1] for col in cursor.fetchall()}
+    columns_to_add = [
+        ("taluka", "TEXT"),
+        ("district", "TEXT DEFAULT 'Nashik'"),
+        ("state", "TEXT DEFAULT 'Maharashtra'"),
+        ("latitude", "REAL DEFAULT 19.9975"),
+        ("longitude", "REAL DEFAULT 73.7898"),
+        ("location_consent_given", "INTEGER DEFAULT 0"),
+        ("land_size_acres", "REAL"),
+        ("preferred_language", "TEXT DEFAULT 'te'")
+    ]
+    for col_name, col_type in columns_to_add:
+        if col_name not in existing_cols:
+            try:
+                cursor.execute(f"ALTER TABLE farmers ADD COLUMN {col_name} {col_type}")
+            except Exception:
+                pass
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS conversations (
@@ -79,9 +120,21 @@ def init_db(db_path: Path = DB_PATH) -> None:
     )
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS price_watchlists (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        phone_number TEXT,
+        crop TEXT,
+        target_price REAL,
+        condition TEXT DEFAULT 'above',
+        active INTEGER DEFAULT 1,
+        created_at REAL,
+        FOREIGN KEY (phone_number) REFERENCES farmers (phone_number)
+    )
+    """)
+
     conn.commit()
     conn.close()
 
 
-# Auto-initialize database schema on import
 init_db()

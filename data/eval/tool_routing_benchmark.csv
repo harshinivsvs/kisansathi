@@ -1,0 +1,31 @@
+id,query,language,expected_intent,expected_crop,expected_place,expected_price
+1,Will it rain tomorrow in Nashik?,en,weather,,Nashik,
+2,What is the temperature and humidity in Pune?,en,weather,,Pune,
+3,Is the wind speed safe for spraying pesticide in Rahata today?,en,weather,,Rahata,
+4,What is the 7-day rainfall outlook for my village?,en,weather,,,
+5,Will there be heavy showers in Ahmednagar this week?,en,weather,,Ahmednagar,
+6,నాసిక్‌లో రేపు వర్షం పడుతుందా? పిచికారీ చేయవచ్చా?,te,weather,,Nashik,
+7,మా ఊరిలో రాబోయే రెండు రోజుల్లో వాతావరణం ఎలా ఉంటుంది?,te,weather,,,
+8,పుణెలో వర్షపాతం మరియు ఉష్ణోగ్రత ఎంత?,te,weather,,Pune,
+9,कल नासिक में बारिश होगी क्या? क्या दवा का छिड़काव कर सकते हैं?,hi,weather,,Nashik,
+10,पुणे का मौसम कैसा रहेगा कल?,hi,weather,,Pune,
+11,क्या आज लासलगाव में तेज हवा चलने की संभावना है?,hi,weather,,Lasalgaon,
+12,What is the modal price of onion in Lasalgaon mandi?,en,mandi,onion,Lasalgaon,
+13,Give me the latest tomato market rates in Pimpalgaon,en,mandi,tomato,Pimpalgaon,
+14,Which nearby mandi gives the highest net return for soybean?,en,mandi,soybean,,
+15,What is the price of cotton per quintal in Kalamna?,en,mandi,cotton,Kalamna,
+16,Show me nearest market rates for onion,en,mandi,onion,,
+17,లాసల్‌గావ్‌లో ఉల్లిపాయ క్వింటాల్ ధర ఎంత?,te,mandi,onion,Lasalgaon,
+18,నా టమాటా పంటకు సమీప మార్కెట్లలో రేటు ఎంత?,te,mandi,tomato,,
+19,పింపల్‌గావ్‌లో టమాటా మోడల్ ధర ఎంత?,te,mandi,tomato,Pimpalgaon,
+20,लासलगाव मंडी में आज प्याज का भाव क्या है?,hi,mandi,onion,Lasalgaon,
+21,पिंपलगांव में टमाटर का ताजा मंडी भाव बताओ,hi,mandi,tomato,Pimpalgaon,
+22,सोयाबीन का नजदीकी मंडियों में क्या रेट मिल रहा है?,hi,mandi,soybean,,
+23,Alert me when onion price crosses 2200 in nearby mandis,en,watchlist,onion,,2200.0
+24,Tell me when tomato crosses 1800 in Pimpalgaon,en,watchlist,tomato,Pimpalgaon,1800.0
+25,ఉల్లిపాయ ధర 2500 దాటినప్పుడు నాకు వాట్సాప్ హెచ్చరిక పంపండి,te,watchlist,onion,,2500.0
+26,టమాటా ధర 1500 దాటితే నాకు తెలపండి,te,watchlist,tomato,,1500.0
+27,प्याज का भाव 2000 पार होते ही मुझे अलर्ट भेजो,hi,watchlist,onion,,2000.0
+28,How do I control purple blotch in my onion crop?,en,rag,onion,,
+29,టమాటా ఆకుమచ్చ తెగులు నివారణకు ఏ మందు పిచికారీ చేయాలి?,te,rag,tomato,,
+30,सोयाबीन में पीला मोजेक रोग नियंत्रण के क्या उपाय हैं?,hi,rag,soybean,,

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KisanSathi (किसान साथी) | AI Farm Advisory & Location Intelligence</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <header class="app-header">
+    <div class="header-branding">
+      <div class="logo-icon"><i class="fa-solid fa-wheat-awn"></i></div>
+      <div>
+        <h1 class="logo-title">KisanSathi <span class="logo-sub">| किसान साथी | కిసాన్ సాథి</span></h1>
+        <p class="logo-tagline">Multilingual, Voice-First AI Farm Advisory • Maharashtra Pilot (Telugu, Hindi, English)</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="lang-selector-group">
+        <label><i class="fa-solid fa-language"></i> Language:</label>
+        <button class="lang-btn active" data-lang="te">తెలుగు (Telugu)</button>
+        <button class="lang-btn" data-lang="hi">हिन्दी (Hindi)</button>
+        <button class="lang-btn" data-lang="en">English</button>
+      </div>
+      <div class="status-indicator">
+        <span class="status-dot"></span> <span id="backend-status">Connected</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="app-layout">
+    <!-- Left Column: Conversational Voice & Chat Interface -->
+    <main class="chat-column">
+      <!-- Quick Demo Suggestion Pills -->
+      <div class="quick-prompts-bar">
+        <span class="prompts-label"><i class="fa-solid fa-bolt"></i> Quick Queries:</span>
+        <button class="prompt-chip" data-query="Will it rain tomorrow in Nashik? Is it safe to spray?">🌦️ Rain & Spray in Nashik</button>
+        <button class="prompt-chip" data-query="What is the onion mandi price in Lasalgaon?">💰 Onion Price in Lasalgaon</button>
+        <button class="prompt-chip" data-query="Alert me when onion crosses 2200">🔔 Watchlist: Onion > ₹2200</button>
+        <button class="prompt-chip" data-query="What is the recommended spray for onion purple blotch?">🌾 Onion Purple Blotch Spray</button>
+        <button class="prompt-chip" data-query="టమాటా ఆకుమచ్చ తెగులు నివారణ ఏమిటి?">🇮🇳 Tomato Blight (Telugu)</button>
+      </div>
+
+      <!-- Chat Stream Messages -->
+      <div class="chat-messages" id="chat-messages">
+        <div class="message assistant-message welcome-msg">
+          <div class="message-avatar"><i class="fa-solid fa-robot"></i></div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="sender-name">KisanSathi AI</span>
+              <span class="intent-badge badge-rag"><i class="fa-solid fa-shield-halved"></i> Verified Advisory</span>
+            </div>
+            <div class="message-body">
+              <p>🌾 <strong>నమస్కారం! Welcome to KisanSathi.</strong></p>
+              <p>I am your location-aware AI farm assistant. I provide verified agronomic advice, local weather forecasts, and nearest mandi prices adjusted for transport costs.</p>
+              <p class="welcome-hint">💡 <em>Tip: You can speak in Telugu, Hindi, or English, share your location, or type your query below.</em></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Audio Recording Banner (Active when recording) -->
+      <div class="recording-banner" id="recording-banner" style="display: none;">
+        <div class="pulse-ring"></div>
+        <span class="recording-timer" id="recording-timer">00:03</span>
+        <span>Recording voice note in <strong id="current-rec-lang">Telugu</strong>... Speak now</span>
+        <button class="btn-stop-rec" id="btn-stop-rec"><i class="fa-solid fa-stop"></i> Stop & Send</button>
+      </div>
+
+      <!-- Chat Input Area -->
+      <div class="chat-input-wrapper">
+        <div class="input-controls">
+          <button class="mic-btn" id="mic-btn" title="Record Voice Note (Whisper STT with Agri Vocab Correction)">
+            <i class="fa-solid fa-microphone"></i>
+          </button>
+          <div class="input-field-container">
+            <input type="text" id="query-input" placeholder="Ask about crop disease, local weather, nearest mandi prices..." autocomplete="off">
+          </div>
+          <button class="send-btn" id="send-btn" title="Send Query">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+        <div class="input-subtext">
+          <span><i class="fa-solid fa-location-dot"></i> Grounded in Maharashtra Mandi & ICAR/MPKV Advisory Data</span>
+          <span id="audio-toggle-wrapper">
+            <label><input type="checkbox" id="return-audio-toggle" checked> Voice Note Reply (TTS)</label>
+          </span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Column: Demo & Debugger Side Panel -->
+    <aside class="side-panel">
+      <!-- Section 1: Farmer Profile & Location Intelligence -->
+      <div class="panel-card farmer-card">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-user-gear"></i> Farmer Profile & Location</h3>
+          <button class="btn-sm" id="btn-daily-digest" title="Generate Personalized Daily Digest">
+            <i class="fa-solid fa-newspaper"></i> Morning Briefing
+          </button>
+        </div>
+        <div class="profile-grid">
+          <div class="profile-field">
+            <span class="field-label">Phone / WhatsApp:</span>
+            <input type="text" id="profile-phone" value="+919876543210" class="mini-input">
+          </div>
+          <div class="profile-field">
+            <span class="field-label">Farmer Name:</span>
+            <span class="field-value" id="profile-name">Ramulu (రాములు)</span>
+          </div>
+          <div class="profile-field">
+            <span class="field-label">Primary Crop:</span>
+            <span class="field-value" id="profile-crop">Onion (ఉల్లిపాయ)</span>
+          </div>
+          <div class="profile-field">
+            <span class="field-label">Sown Date:</span>
+            <span class="field-value" id="profile-sowing">Oct 15 (27 days ago)</span>
+          </div>
+          <div class="profile-field full-width">
+            <span class="field-label">Location:</span>
+            <span class="field-value" id="profile-location-text">Lasalgaon, Nashik (19.9975, 73.7898)</span>
+          </div>
+          <div class="location-controls full-width">
+            <select id="district-picker" class="dropdown-select">
+              <option value="nashik">Nashik (Default Cluster)</option>
+              <option value="pimpalgaon">Pimpalgaon Baswant</option>
+              <option value="lasalgaon">Lasalgaon (Asia's Largest Onion Mandi)</option>
+              <option value="pune">Pune</option>
+              <option value="ahmednagar">Ahmednagar (Rahata)</option>
+              <option value="solapur">Solapur</option>
+              <option value="nagpur">Nagpur (Kalamna)</option>
+              <option value="yavatmal">Yavatmal (Vidarbha Cotton)</option>
+              <option value="akola">Akola (Soybean Belt)</option>
+            </select>
+            <button class="btn-secondary btn-sm" id="btn-update-loc">Update Pin</button>
+            <button class="btn-outline btn-sm" id="btn-clear-loc" title="Delete Location Consent"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+          <div class="consent-badge" id="consent-badge">
+            <i class="fa-solid fa-check-circle"></i> Location Consent Active (Hyperlocal Tools Enabled)
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: AI Intent & Execution Telemetry -->
+      <div class="panel-card telemetry-card">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-microchip"></i> Detected Intent & Tool Routing</h3>
+        </div>
+        <div class="telemetry-grid">
+          <div class="telemetry-item">
+            <span class="t-label">Intent:</span>
+            <span class="t-value" id="tele-intent">RAG Advisory</span>
+          </div>
+          <div class="telemetry-item">
+            <span class="t-label">Confidence:</span>
+            <span class="t-value" id="tele-confidence">96.0%</span>
+          </div>
+          <div class="telemetry-item">
+            <span class="t-label">Latency:</span>
+            <span class="t-value" id="tele-latency">48 ms</span>
+          </div>
+          <div class="telemetry-item">
+            <span class="t-label">Est. Cost:</span>
+            <span class="t-value" id="tele-cost">$0.0001</span>
+          </div>
+          <div class="telemetry-item full-width">
+            <span class="t-label">Citations / Verified Source:</span>
+            <div class="t-sources" id="tele-sources">MPKV Rahuri Onion Package of Practices (Page 12)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Nearest Mandis & Net Return Map -->
+      <div class="panel-card mandi-card">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-scale-balanced"></i> Nearest Mandis & Net Realizable Price</h3>
+        </div>
+        <div class="transport-note">
+          <small><i class="fa-solid fa-truck"></i> Transport Rate: ₹2.50 / km / quintal deducted from modal price</small>
+        </div>
+        <!-- Mandis Table -->
+        <div class="table-container">
+          <table class="mandi-table" id="mandi-table">
+            <thead>
+              <tr>
+                <th>Mandi</th>
+                <th>Dist</th>
+                <th>Modal</th>
+                <th>Freight</th>
+                <th>Net Return</th>
+              </tr>
+            </thead>
+            <tbody id="mandi-table-body">
+              <tr>
+                <td colspan="5" class="loading-cell">Loading nearby markets...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Interactive Map Container -->
+        <div class="map-wrapper">
+          <div id="mandi-map" style="height: 200px; width: 100%; border-radius: 8px;"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+[
+  {
+    "mandi_id": "MH-NAS-01",
+    "name": "Lasalgaon",
+    "district": "Nashik",
+    "state": "Maharashtra",
+    "latitude": 20.1478,
+    "longitude": 74.2251,
+    "major_crops": ["onion", "tomato", "soybean"],
+    "is_major_terminal": true
+  },
+  {
+    "mandi_id": "MH-NAS-02",
+    "name": "Pimpalgaon Baswant",
+    "district": "Nashik",
+    "state": "Maharashtra",
+    "latitude": 20.1706,
+    "longitude": 73.9856,
+    "major_crops": ["tomato", "onion", "soybean"],
+    "is_major_terminal": true
+  },
+  {
+    "mandi_id": "MH-NAS-03",
+    "name": "Nashik APMC",
+    "district": "Nashik",
+    "state": "Maharashtra",
+    "latitude": 19.9975,
+    "longitude": 73.7898,
+    "major_crops": ["tomato", "onion"],
+    "is_major_terminal": false
+  },
+  {
+    "mandi_id": "MH-PUN-01",
+    "name": "Pune Gultekdi",
+    "district": "Pune",
+    "state": "Maharashtra",
+    "latitude": 18.4967,
+    "longitude": 73.8647,
+    "major_crops": ["onion", "tomato", "cotton", "soybean"],
+    "is_major_terminal": true
+  },
+  {
+    "mandi_id": "MH-PUN-02",
+    "name": "Baramati",
+    "district": "Pune",
+    "state": "Maharashtra",
+    "latitude": 18.1517,
+    "longitude": 74.5772,
+    "major_crops": ["onion", "soybean"],
+    "is_major_terminal": false
+  },
+  {
+    "mandi_id": "MH-AHM-01",
+    "name": "Ahmednagar APMC",
+    "district": "Ahmednagar",
+    "state": "Maharashtra",
+    "latitude": 19.0952,
+    "longitude": 74.7496,
+    "major_crops": ["onion", "soybean", "cotton"],
+    "is_major_terminal": true
+  },
+  {
+    "mandi_id": "MH-AHM-02",
+    "name": "Rahata",
+    "district": "Ahmednagar",
+    "state": "Maharashtra",
+    "latitude": 19.6738,
+    "longitude": 74.4842,
+    "major_crops": ["onion", "soybean"],
+    "is_major_terminal": false
+  },
+  {
+    "mandi_id": "MH-SOL-01",
+    "name": "Solapur APMC",
+    "district": "Solapur",
+    "state": "Maharashtra",
+    "latitude": 17.6599,
+    "longitude": 75.9064,
+    "major_crops": ["onion", "cotton", "soybean"],
+    "is_major_terminal": true
+  },
+  {
+    "mandi_id": "MH-NAG-01",
+    "name": "Nagpur Kalamna",
+    "district": "Nagpur",
+    "state": "Maharashtra",
+    "latitude": 21.1458,
+    "longitude": 79.0882,
+    "major_crops": ["cotton", "soybean", "tomato"],
+    "is_major_terminal": true
+  },
+  {
+    "mandi_id": "MH-AKO-01",
+    "name": "Akola APMC",
+    "district": "Akola",
+    "state": "Maharashtra",
+    "latitude": 20.7002,
+    "longitude": 77.0082,
+    "major_crops": ["cotton", "soybean"],
+    "is_major_terminal": true
+  },
+  {
+    "mandi_id": "MH-AMR-01",
+    "name": "Amravati APMC",
+    "district": "Amravati",
+    "state": "Maharashtra",
+    "latitude": 20.9374,
+    "longitude": 77.7796,
+    "major_crops": ["soybean", "cotton"],
+    "is_major_terminal": true
+  },
+  {
+    "mandi_id": "MH-JAL-01",
+    "name": "Jalgaon APMC",
+    "district": "Jalgaon",
+    "state": "Maharashtra",
+    "latitude": 21.0077,
+    "longitude": 75.5626,
+    "major_crops": ["cotton", "onion"],
+    "is_major_terminal": true
+  },
+  {
+    "mandi_id": "MH-JLN-01",
+    "name": "Jalna APMC",
+    "district": "Jalna",
+    "state": "Maharashtra",
+    "latitude": 19.8347,
+    "longitude": 75.8816,
+    "major_crops": ["cotton", "soybean"],
+    "is_major_terminal": true
+  },
+  {
+    "mandi_id": "MH-AUR-01",
+    "name": "Chhatrapati Sambhajinagar",
+    "district": "Aurangabad",
+    "state": "Maharashtra",
+    "latitude": 19.8762,
+    "longitude": 75.3433,
+    "major_crops": ["cotton", "soybean", "onion"],
+    "is_major_terminal": true
+  },
+  {
+    "mandi_id": "MH-KOL-01",
+    "name": "Kolhapur APMC",
+    "district": "Kolhapur",
+    "state": "Maharashtra",
+    "latitude": 16.7050,
+    "longitude": 74.2433,
+    "major_crops": ["tomato", "onion"],
+    "is_major_terminal": false
+  },
+  {
+    "mandi_id": "MH-SAN-01",
+    "name": "Sangli APMC",
+    "district": "Sangli",
+    "state": "Maharashtra",
+    "latitude": 16.8524,
+    "longitude": 74.5815,
+    "major_crops": ["soybean", "tomato"],
+    "is_major_terminal": false
+  },
+  {
+    "mandi_id": "MH-NAN-01",
+    "name": "Nanded APMC",
+    "district": "Nanded",
+    "state": "Maharashtra",
+    "latitude": 19.1383,
+    "longitude": 77.3210,
+    "major_crops": ["cotton", "soybean"],
+    "is_major_terminal": false
+  },
+  {
+    "mandi_id": "MH-YAV-01",
+    "name": "Yavatmal APMC",
+    "district": "Yavatmal",
+    "state": "Maharashtra",
+    "latitude": 20.3888,
+    "longitude": 78.1204,
+    "major_crops": ["cotton", "soybean"],
+    "is_major_terminal": false
+  },
+  {
+    "mandi_id": "MH-WAR-01",
+    "name": "Wardha APMC",
+    "district": "Wardha",
+    "state": "Maharashtra",
+    "latitude": 20.7453,
+    "longitude": 78.6022,
+    "major_crops": ["cotton", "soybean"],
+    "is_major_terminal": false
+  },
+  {
+    "mandi_id": "MH-DHU-01",
+    "name": "Dhule APMC",
+    "district": "Dhule",
+    "state": "Maharashtra",
+    "latitude": 20.9042,
+    "longitude": 74.7749,
+    "major_crops": ["cotton", "onion"],
+    "is_major_terminal": false
+  }
+]
